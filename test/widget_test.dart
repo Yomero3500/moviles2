@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:product_list_app/main.dart';
+// Ensure that main.dart exports or defines a class named MyApp.
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {

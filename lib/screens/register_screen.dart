@@ -20,7 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _formKey.currentState!.save();
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:3000/clients/'),
+          Uri.parse('http://192.168.206.147:3000/Clients/'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'email': _email, 'password': _password}),
         );
@@ -30,14 +30,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al registrar usuario')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error al registrar usuario')));
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error de conexión: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
       }
     }
   }
@@ -56,8 +56,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Email'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese email' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese email'
+                              : null,
                   onSaved: (value) => _email = value ?? '',
                   keyboardType: TextInputType.emailAddress,
                 ),
@@ -66,20 +69,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
                     suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   obscureText: _obscure,
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese contraseña' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese contraseña'
+                              : null,
                   onSaved: (value) => _password = value ?? '',
                 ),
                 SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _register,
-                  child: Text('Registrar'),
-                ),
+                ElevatedButton(onPressed: _register, child: Text('Registrar')),
               ],
             ),
           ),

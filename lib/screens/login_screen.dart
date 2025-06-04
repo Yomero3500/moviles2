@@ -3,6 +3,8 @@ import 'product_list_screen.dart';
 import 'register_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../service/auth_service.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,13 +18,14 @@ class _LoginScreenState extends State<LoginScreen> {
   String _email = '';
   String _password = '';
   bool _obscure = true;
+  final AuthService authService = AuthService();
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:3000/clients/login'),
+          Uri.parse('http://192.168.206.147:3000/Clients/login'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'email': _email, 'password': _password}),
         );
@@ -31,23 +34,33 @@ class _LoginScreenState extends State<LoginScreen> {
           if (data['message'] == 'Login successful') {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => ProductListScreen()),
+              MaterialPageRoute(builder: (_) => HomeScreen(user: data['user'])),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Credenciales incorrectas')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Credenciales incorrectas')));
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al iniciar sesión')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error al iniciar sesión')));
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error de conexión: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
       }
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    final user = await authService.signInWithGoogle();
+    if (user != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => ProductListScreen()),
+      );
     }
   }
 
@@ -65,8 +78,11 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Email'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese email' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese email'
+                              : null,
                   onSaved: (value) => _email = value ?? '',
                 ),
                 SizedBox(height: 16),
@@ -74,20 +90,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
                     suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   obscureText: _obscure,
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese contraseña' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese contraseña'
+                              : null,
                   onSaved: (value) => _password = value ?? '',
                 ),
                 SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _login,
-                  child: Text('Ingresar'),
-                ),
+                ElevatedButton(onPressed: _login, child: Text('Ingresar')),
                 SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
@@ -97,6 +115,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   child: Text('Crear una cuenta'),
+                ),
+                SizedBox(height: 32),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.login),
+                  label: Text("Iniciar sesión con Google"),
+                  onPressed: _loginWithGoogle,
                 ),
               ],
             ),
