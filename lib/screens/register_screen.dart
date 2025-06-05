@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../service/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,30 +15,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _email = '';
   String _password = '';
   bool _obscure = true;
+  final AuthService authService = AuthService();
 
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        final response = await http.post(
-          Uri.parse('http://192.168.206.147:3000/Clients/'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'email': _email, 'password': _password}),
-        );
-        if (response.statusCode == 200 || response.statusCode == 201) {
+        // Intentar registrar con Firebase Auth
+        final user = await authService.registerWithEmail(_email, _password);
+        if (user != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Usuario registrado: $_email')),
+            SnackBar(content: Text('Usuario registrado en Firebase: $_email')),
           );
           Navigator.pop(context);
-        } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error al registrar usuario')));
+          return;
         }
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
+        // Si falla Firebase, intentar registrar con backend propio
+        try {
+          final response = await http.post(
+            Uri.parse('http://192.168.206.147:3000/Clients/'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': _email, 'password': _password}),
+          );
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Usuario registrado: $_email')),
+            );
+            Navigator.pop(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al registrar usuario')),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
+        }
       }
     }
   }

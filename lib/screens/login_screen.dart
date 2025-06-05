@@ -24,32 +24,47 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        final response = await http.post(
-          Uri.parse('http://192.168.206.147:3000/Clients/login'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'email': _email, 'password': _password}),
-        );
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          if (data['message'] == 'Login successful') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => HomeScreen(user: data['user'])),
-            );
+        // Intentar login con Firebase Auth
+        final user = await authService.signInWithEmail(_email, _password);
+        if (user != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
+          );
+          return;
+        }
+      } catch (e) {
+        // Si falla Firebase, intentar login con backend propio
+        try {
+          final response = await http.post(
+            Uri.parse('http://192.168.122.1:3000/Clients/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': _email, 'password': _password}),
+          );
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            if (data['message'] == 'Login successful') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HomeScreen(user: data['user']),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Credenciales incorrectas')),
+              );
+            }
           } else {
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(SnackBar(content: Text('Credenciales incorrectas')));
+            ).showSnackBar(SnackBar(content: Text('Error al iniciar sesión')));
           }
-        } else {
+        } catch (e) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error al iniciar sesión')));
+          ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
         }
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
       }
     }
   }
