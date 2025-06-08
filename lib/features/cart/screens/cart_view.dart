@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import '../cart/cart.dart';
+import '../../products/models/product.dart';
+import '../models/cart_model.dart';
 
-class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+class CartView extends StatefulWidget {
+  const CartView({super.key});
 
   @override
-  State<CartScreen> createState() => _CartScreenState();
+  State<CartView> createState() => _CartViewState();
 }
 
-class _CartScreenState extends State<CartScreen> {
+class _CartViewState extends State<CartView> {
   @override
   Widget build(BuildContext context) {
     final items = Cart.items;
@@ -20,23 +21,25 @@ class _CartScreenState extends State<CartScreen> {
           : ListView.builder(
               itemCount: items.length,
               itemBuilder: (context, index) {
-                final product = items[index];
+                final cartItem = items[index];
                 return ListTile(
-                  leading: product['image'] != null
+                  leading: cartItem.product.image.isNotEmpty
                       ? Image.network(
-                          product['image'],
+                          cartItem.product.image,
                           width: 40,
                           height: 40,
                           fit: BoxFit.contain,
                         )
                       : null,
-                  title: Text(product['title']),
-                  subtitle: Text('\$${product['price'].toStringAsFixed(2)}'),
+                  title: Text(cartItem.product.name),
+                  subtitle: Text(
+                    '\$${cartItem.product.price.toStringAsFixed(2)} x ${cartItem.quantity} = \$${(cartItem.product.price * cartItem.quantity).toStringAsFixed(2)}',
+                  ),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
                       setState(() {
-                        Cart.remove(product);
+                        Cart.remove(cartItem.product);
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Producto eliminado del carrito')),

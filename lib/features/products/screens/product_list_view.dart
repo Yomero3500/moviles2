@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'cart_screen.dart';
-import '../service/product_service.dart';
-import 'product_detail_screen.dart';
+import '../../cart/screens/cart_view.dart';
+import '../../../core/services/product_service.dart';
+import 'product_detail_view.dart';
+import '../models/product.dart';
+import '../../cart/models/cart_model.dart';
 
-class ProductListScreen extends StatelessWidget {
-  const ProductListScreen({super.key});
+class ProductListView extends StatelessWidget {
+  const ProductListView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +19,13 @@ class ProductListScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => CartScreen()),
+                MaterialPageRoute(builder: (_) => CartView()),
               );
             },
           ),
         ],
       ),
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<Product>>(
         future: ProductService.fetchProducts(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -40,26 +42,29 @@ class ProductListScreen extends StatelessWidget {
               return Card(
                 margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 child: ListTile(
-                  leading: Image.network(
-                    product['image'],
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.contain,
-                  ),
-                  title: Text(product['title']),
-                  subtitle: Text('\$${product['price'].toStringAsFixed(2)}'),
+                  leading: product.image.isNotEmpty
+                      ? Image.network(
+                          product.image,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.contain,
+                        )
+                      : null,
+                  title: Text(product.name),
+                  subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ElevatedButton(
                         onPressed: () {
+                          Cart.add(product);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Producto comprado exitosamente'),
+                              content: Text('Producto agregado al carrito'),
                             ),
                           );
                         },
-                        child: Text('Comprar'),
+                        child: Text('Agregar'),
                       ),
                       SizedBox(width: 8),
                       Icon(Icons.arrow_forward_ios),
@@ -69,7 +74,7 @@ class ProductListScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ProductDetailScreen(
+                        builder: (_) => ProductDetailView(
                           product: product,
                         ),
                       ),

@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import '../features/products/screens/product_list_view.dart';
-import '../features/products/screens/home_view.dart';
-import 'register_screen.dart';
-import '../core/services/auth_service.dart';
+import '../../../core/services/auth_service.dart';
+import 'register_view.dart';
+import '../../products/screens/home_view.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginViewState extends State<LoginView> {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
@@ -27,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final userCredential = await authService.signInWithEmailAndPassword(
             _email, _password);
         setState(() => _loading = false);
-        if (userCredential != null && userCredential.user != null) {
+        if (userCredential != null) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => HomeView(user: userCredential.user!)),
@@ -47,11 +46,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginWithGoogle() async {
+    setState(() => _loading = true);
     final user = await authService.signInWithGoogle();
+    setState(() => _loading = false);
     if (user != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => ProductListView()),
+        MaterialPageRoute(builder: (_) => HomeView(user: user)),
       );
     }
   }
@@ -70,13 +71,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Image.asset(
+                      'assets/images/logo.jpg',
+                      height: 150,
+                      width: 150,
+                    ),
+                    SizedBox(height: 32),
                     TextFormField(
                       decoration: InputDecoration(labelText: 'Email'),
-                      validator:
-                          (value) =>
-                              value == null || value.isEmpty
-                                  ? 'Ingrese email'
-                                  : null,
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Ingrese email'
+                          : null,
                       onSaved: (value) => _email = value ?? '',
                     ),
                     SizedBox(height: 16),
@@ -91,30 +96,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       obscureText: _obscure,
-                      validator:
-                          (value) =>
-                              value == null || value.isEmpty
-                                  ? 'Ingrese contraseña'
-                                  : null,
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Ingrese contraseña'
+                          : null,
                       onSaved: (value) => _password = value ?? '',
                     ),
                     SizedBox(height: 32),
-                    ElevatedButton(onPressed: _login, child: Text('Ingresar')),
+                    ElevatedButton(
+                        onPressed: _loading ? null : _login,
+                        child: Text('Ingresar')),
                     SizedBox(height: 16),
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => RegisterScreen()),
-                        );
-                      },
+                      onPressed: _loading
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => RegisterView()),
+                              );
+                            },
                       child: Text('Crear una cuenta'),
                     ),
                     SizedBox(height: 32),
                     ElevatedButton.icon(
                       icon: Icon(Icons.login),
                       label: Text("Iniciar sesión con Google"),
-                      onPressed: _loginWithGoogle,
+                      onPressed: _loading ? null : _loginWithGoogle,
                     ),
                   ],
                 ),
@@ -124,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (_loading)
             Container(
               color: Colors.black.withOpacity(0.3),
-              child: const Center(child: CircularProgressIndicator()),
+              child: Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
